@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KROMA CRM — Prospección Comercial</title>
+    <meta name="description" content="CRM de prospección audiovisual para agencias creativas">
+    <meta name="theme-color" content="#000">
+    <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;KROMA CRM Prospección&quot;,&quot;short_name&quot;:&quot;Prospección&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#000&quot;,&quot;theme_color&quot;:&quot;#000&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='system-ui'>K.</text></svg>&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any&quot;}]}">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='system-ui'>K.</text></svg>">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #808080;
+            --accent-primary: #4f46e5;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --accent-success: #10b981;
+            --accent-high: #ff0000;
+            --accent-medium: #fbbf24;
+            --accent-low: #e5e7eb;
+            --border-color: #333333;
+            --shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #111827;
+            --text-secondary: #6b7280;
+            --text-tertiary: #9ca3af;
+            --border-color: #e5e7eb;
+            --shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* LAYOUT */
+        .container {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .sidebar {
+            background-color: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            gap: 16px;
+            overflow-y: auto;
+        }
+
+        .sidebar-item {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .sidebar-item.active {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-tertiary);
+            border-color: var(--text-secondary);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background-color: var(--accent-danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            opacity: 0.9;
+        }
+
+        /* CONTENT AREA */
+        .view-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* TARJETAS */
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            border-color: var(--text-secondary);
+            box-shadow: var(--shadow);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* TABLAS */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: var(--bg-tertiary);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-high {
+            background-color: rgba(255, 0, 0, 0.2);
+            color: #ff6b6b;
+        }
+
+        .badge-medium {
+            background-color: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .badge-low {
+            background-color: rgba(229, 231, 235, 0.2);
+            color: #b0b0b0;
+        }
+
+        .badge-success {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .badge-danger {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* KANBAN */
+        .kanban-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+            overflow-x: auto;
+            padding: 8px 0;
+        }
+
+        .kanban-column {
+            background-color: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 400px;
+        }
+
+        .kanban-column-header {
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .kanban-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .kanban-card:hover {
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .kanban-card-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .kanban-card-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* MODALES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h2 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* GRID UTILITIES */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 8px 0;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* ALERTS */
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: #818cf8;
+            border-left-color: #4f46e5;
+        }
+
+        .alert-warning {
+            background-color: rgba(251, 191, 36, 0.1);
+            color: #fbbf24;
+            border-left-color: #f59e0b;
+        }
+
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border-left-color: #dc2626;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 60px 1fr;
+            }
+
+            .sidebar {
+                padding: 12px 0;
+            }
+
+            .sidebar-item {
+                width: 44px;
+                height: 44px;
+                font-size: 18px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: flex-start;
+            }
+
+            .kanban-container {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+            }
+        }
+
+        /* LOADER */
+        .loader {
+            border: 3px solid var(--bg-tertiary);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* AUTH */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 24px;
+        }
+
+        .auth-box {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 32px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .auth-box h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .auth-box p {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .auth-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .spacer {
+            margin-top: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- AUTH VIEW -->
+    <div id="authView" class="auth-container" style="display: flex;">
+        <div class="auth-box">
+            <h1>KROMA CRM</h1>
+            <p>Prospección Comercial</p>
+            <div class="auth-error" id="authError"></div>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="authEmail" class="form-control" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Ingresar</button>
+            </form>
+            <p style="margin-top: 16px; font-size: 12px; color: var(--text-tertiary); text-align: center;">
+                Usa tus credenciales de KROMA
+            </p>
+        </div>
+    </div>
+
+    <!-- APP VIEW -->
+    <div id="appView" style="display: none;">
+        <div class="container">
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <div class="sidebar-item active" data-view="today" title="Hoy">
+                    📅
+                </div>
+                <div class="sidebar-item" data-view="prospects" title="Prospectos">
+                    🎯
+                </div>
+                <div class="sidebar-item" data-view="opportunities" title="Oportunidades">
+                    💼
+                </div>
+                <div class="sidebar-item" data-view="activities" title="Actividades">
+                    📝
+                </div>
+                <div class="sidebar-item" data-view="dashboard" title="Dashboard">
+                    📊
+                </div>
+                <div style="flex: 1;"></div>
+                <div class="sidebar-item" data-view="settings" title="Configuración">
+                    ⚙️
+                </div>
+                <div class="sidebar-item" id="logoutBtn" title="Salir">
+                    🚪
+                </div>
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="main-content">
+                <!-- HEADER -->
+                <div class="header">
+                    <div class="header-left">
+                        <h1 id="viewTitle">Hoy</h1>
+                    </div>
+                    <div class="header-right">
+                        <button class="btn btn-primary" id="newEntityBtn">+ Nuevo</button>
+                        <span id="userEmail" style="font-size: 12px; color: var(--text-secondary);"></span>
+                    </div>
+                </div>
+
+                <!-- CONTENT -->
+                <div class="view-container">
+                    <!-- TODAY VIEW -->
+                    <div id="todayView" class="view active">
+                        <h2 style="margin-bottom: 16px;">Tareas de hoy</h2>
+                        <div id="todayContent"></div>
+                    </div>
+
+                    <!-- PROSPECTS VIEW -->
+                    <div id="prospectsView" class="view">
+                        <div style="margin-bottom: 16px;">
+                            <input type="text" id="prospectsFilter" class="form-control" placeholder="Buscar empresa...">
+                        </div>
+                        <div id="prospectsContent"></div>
+                    </div>
+
+                    <!-- OPPORTUNITIES VIEW -->
+                    <div id="opportunitiesView" class="view">
+                        <div id="opportunitiesContent"></div>
+                    </div>
+
+                    <!-- ACTIVITIES VIEW -->
+                    <div id="activitiesView" class="view">
+                        <div id="activitiesContent"></div>
+                    </div>
+
+                    <!-- DASHBOARD VIEW -->
+                    <div id="dashboardView" class="view">
+                        <div id="dashboardContent"></div>
+                    </div>
+
+                    <!-- SETTINGS VIEW -->
+                    <div id="settingsView" class="view">
+                        <div class="card">
+                            <h2>Configuración</h2>
+                            <p style="margin-top: 16px; color: var(--text-secondary);">Próximamente...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALES -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="companyModalTitle">Nueva Empresa</h2>
+                <button class="modal-close" onclick="closeModal('companyModal')">&times;</button>
+            </div>
+            <form id="companyForm" onsubmit="saveCompany(event)">
+                <div class="form-group">
+                    <label class="form-label">Nombre de empresa *</label>
+                    <input type="text" id="companyName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Industria</label>
+                    <select id="companyIndustry" class="form-control">
+                        <option>Retail</option>
+                        <option>F&B</option>
+                        <option>Real Estate</option>
+                        <option>Fintech</option>
+                        <option>Agencia</option>
+                        <option>Educación</option>
+                        <option>Turismo</option>
+                        <option>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tamaño de empresa</label>
+                    <select id="companySize" class="form-control">
+                        <option>1-10</option>
+                        <option>11-50</option>
+                        <option>51-200</option>
+                        <option>201+</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ubicación</label>
+                    <input type="text" id="companyLocation" class="form-control" placeholder="Panamá">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Website</label>
+                    <input type="url" id="companyWebsite" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Instagram</label>
+                    <input type="text" id="companyInstagram" class="form-control" placeholder="@handle">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">LinkedIn</label>
+                    <input type="url" id="companyLinkedin" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notas</label>
+                    <textarea id="companyNotes" class="form-control"></textarea>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Guardar</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('companyModal')" style="flex: 1;">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT -->
+    <script>
+        // ============================================
+        // CONFIGURACIÓN SUPABASE
+        // ============================================
+        const SUPABASE_URL = 'https://hymqhjuritugqhwimfnm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bXFoamp1cml0dWdxaHdpbWZubSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjkyMzU4MTM1LCJleHAiOjE4NDk0MTQ1MzV9.mC0vOmJ4-L4Yii_u3yQ5J8K6-w9Z8hQ8k6X3-zP3pL0';
+
+        let supabase;
+        let currentUser = null;
+        let data = {
+            companies: [],
+            contacts: [],
+            opportunities: [],
+            activities: []
+        };
+
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        async function init() {
+            // Cargar supabase-js
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            // Verificar sesión
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                await loadData();
+                showApp();
+            }
+
+            // Listener para cambios de auth
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN') {
+                    currentUser = session.user;
+                    await loadData();
+                    showApp();
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    showAuth();
+                }
+            });
+
+            // Event listeners
+            setupEventListeners();
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('authEmail').value;
+            const password = document.getElementById('authPassword').value;
+            const errorDiv = document.getElementById('authError');
+
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Error de conexión';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function setupEventListeners() {
+            // Sidebar navigation
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const view = item.dataset.view;
+                    if (view) {
+                        switchView(view);
+                        document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                        item.classList.add('active');
+                    }
+                });
+            });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+            });
+
+            // New entity button
+            document.getElementById('newEntityBtn').addEventListener('click', () => {
+                openModal('companyModal');
+            });
+
+            // Prospects filter
+            document.getElementById('prospectsFilter').addEventListener('input', (e) => {
+                renderProspects(e.target.value);
+            });
+        }
+
+        function switchView(viewName) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewName + 'View').classList.add('active');
+
+            const titles = {
+                'today': 'Hoy',
+                'prospects': 'Prospectos',
+                'opportunities': 'Oportunidades',
+                'activities': 'Actividades',
+                'dashboard': 'Dashboard',
+                'settings': 'Configuración'
+            };
+            document.getElementById('viewTitle').textContent = titles[viewName] || 'Kroma CRM';
+
+            // Render content
+            if (viewName === 'today') renderToday();
+            if (viewName === 'prospects') renderProspects();
+            if (viewName === 'opportunities') renderOpportunities();
+            if (viewName === 'activities') renderActivities();
+            if (viewName === 'dashboard') renderDashboard();
+        }
+
+        // ============================================
+        // CARGA DE DATOS
+        // ============================================
+        async function loadData() {
+            try {
+                const [companies, contacts, opportunities, activities] = await Promise.all([
+                    supabase.from('crm_companies').select('*').order('created_at', { ascending: false }),
+                    supabase.from('crm_contacts').select('*').order('created_at', { ascending: false }),
+                    supabase.from('crm_opportunities').select('*').order('created_at', { ascending: false }),
+                    supabase.from('crm_activities').select('*').order('activity_date', { ascending: false })
+                ]);
+
+                data.companies = companies.data || [];
+                data.contacts = contacts.data || [];
+                data.opportunities = opportunities.data || [];
+                data.activities = activities.data || [];
+
+                document.getElementById('userEmail').textContent = currentUser?.email || '';
+            } catch (err) {
+                console.error('Error loading data:', err);
+            }
+        }
+
+        // ============================================
+        // RENDER VIEWS
+        // ============================================
+        function renderToday() {
+            const container = document.getElementById('todayContent');
+            let html = '';
+
+            // Seguimientos pendientes
+            const followups = data.companies.filter(c => c.next_followup && new Date(c.next_followup).toDateString() === new Date().toDateString());
+            if (followups.length > 0) {
+                html += '<div class="card"><div class="card-header"><h3>📅 Seguimientos de hoy</h3></div>';
+                followups.forEach(c => {
+                    html += `<div style="padding: 8px 0;">${c.name} - ${c.next_followup}</div>`;
+                });
+                html += '</div>';
+            }
+
+            // Oportunidades de alta prioridad
+            const highOpps = data.opportunities.filter(o => {
+                const company = data.companies.find(c => c.id === o.company_id);
+                return company && company.priority === '🔥' && ['En seguimiento', 'Brief recibido', 'Propuesta enviada'].includes(o.pipeline_stage);
+            });
+            if (highOpps.length > 0) {
+                html += '<div class="card"><div class="card-header"><h3>🔥 Oportunidades de alta prioridad</h3></div>';
+                highOpps.forEach(o => {
+                    const company = data.companies.find(c => c.id === o.company_id);
+                    html += `<div style="padding: 8px 0;"><strong>${company?.name}</strong> - ${o.name} (${o.pipeline_stage})</div>`;
+                });
+                html += '</div>';
+            }
+
+            // Propuestas en espera
+            const pendingProposals = data.opportunities.filter(o => o.pipeline_stage === 'Propuesta enviada');
+            if (pendingProposals.length > 0) {
+                html += '<div class="card"><div class="card-header"><h3>⏳ Propuestas en espera</h3></div>';
+                pendingProposals.forEach(o => {
+                    const company = data.companies.find(c => c.id === o.company_id);
+                    const days = Math.floor((new Date() - new Date(o.updated_at)) / (1000 * 60 * 60 * 24));
+                    html += `<div style="padding: 8px 0;"><strong>${company?.name}</strong> - ${days} días sin respuesta</div>`;
+                });
+                html += '</div>';
+            }
+
+            if (!html) {
+                html = '<div class="alert alert-info">No hay tareas pendientes para hoy ✨</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderProspects(filter = '') {
+            const container = document.getElementById('prospectsContent');
+            let filtered = data.companies;
+
+            if (filter) {
+                filtered = filtered.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+            }
+
+            let html = '<table><thead><tr><th>Empresa</th><th>Industria</th><th>Prioridad</th><th>Estado</th><th>Último contacto</th><th>Acciones</th></tr></thead><tbody>';
+
+            filtered.forEach(c => {
+                const lastContact = c.last_contact ? new Date(c.last_contact).toLocaleDateString() : 'Nunca';
+                html += `<tr>
+                    <td><strong>${c.name}</strong></td>
+                    <td>${c.industry}</td>
+                    <td><span class="badge badge-${c.priority === '🔥' ? 'high' : c.priority === '🟡' ? 'medium' : 'low'}">${c.priority} ${c.priority === '🔥' ? 'Alta' : c.priority === '🟡' ? 'Media' : 'Baja'}</span></td>
+                    <td>${c.prospect_status}</td>
+                    <td>${lastContact}</td>
+                    <td><button class="btn btn-secondary btn-small" onclick="openCompanyDetail('${c.id}')">Ver</button></td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderOpportunities() {
+            const container = document.getElementById('opportunitiesContent');
+            const stages = [
+                'Prospecto identificado', 'Contacto encontrado', 'Primer contacto realizado',
+                'En seguimiento', 'Brief recibido', 'Propuesta enviada', 'En negociación',
+                'Ganado', 'Perdido', 'Pausado', 'Cliente recurrente'
+            ];
+
+            let html = '<div class="kanban-container">';
+
+            stages.forEach(stage => {
+                const stageOpps = data.opportunities.filter(o => o.pipeline_stage === stage);
+                html += `<div class="kanban-column">
+                    <div class="kanban-column-header">${stage} (${stageOpps.length})</div>`;
+
+                stageOpps.forEach(o => {
+                    const company = data.companies.find(c => c.id === o.company_id);
+                    html += `<div class="kanban-card" onclick="openOpportunityDetail('${o.id}')">
+                        <div class="kanban-card-title">${o.name}</div>
+                        <div class="kanban-card-subtitle">${company?.name}</div>
+                        <div class="kanban-card-subtitle" style="margin-top: 8px;">💵 $${o.estimated_budget}</div>
+                    </div>`;
+                });
+
+                html += '</div>';
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderActivities() {
+            const container = document.getElementById('activitiesContent');
+            let html = '<table><thead><tr><th>Fecha</th><th>Tipo</th><th>Empresa</th><th>Contacto</th><th>Resultado</th><th>Notas</th></tr></thead><tbody>';
+
+            data.activities.slice(0, 50).forEach(a => {
+                const company = data.companies.find(c => c.id === a.company_id);
+                const contact = data.contacts.find(c => c.id === a.contact_id);
+                const date = new Date(a.activity_date).toLocaleDateString();
+                html += `<tr>
+                    <td>${date}</td>
+                    <td>${a.activity_type}</td>
+                    <td>${company?.name || '-'}</td>
+                    <td>${contact?.first_name} ${contact?.last_name || '-'}</td>
+                    <td><span class="badge badge-${a.result === 'Positiva' ? 'success' : a.result === 'Negativa' ? 'danger' : 'medium'}">${a.result}</span></td>
+                    <td>${a.notes.substring(0, 50)}</td>
+                </tr>`;
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboardContent');
+            const totalCompanies = data.companies.length;
+            const totalContacts = data.contacts.length;
+            const openOpps = data.opportunities.filter(o => !['Ganado', 'Perdido'].includes(o.pipeline_stage));
+            const pipelineValue = openOpps.reduce((sum, o) => sum + (o.potential_value || 0), 0);
+            const wonOpps = data.opportunities.filter(o => o.pipeline_stage === 'Ganado');
+            const wonValue = wonOpps.reduce((sum, o) => sum + o.estimated_budget, 0);
+
+            let html = `
+                <div class="grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Prospectos</div>
+                        <div class="stat-number">${totalCompanies}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Contactos Identificados</div>
+                        <div class="stat-number">${totalContacts}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Oportunidades Abiertas</div>
+                        <div class="stat-number">${openOpps.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Valor Pipeline</div>
+                        <div class="stat-number">$${pipelineValue.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Oportunidades Ganadas</div>
+                        <div class="stat-number">${wonOpps.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Ingresos Cerrados</div>
+                        <div class="stat-number">$${wonValue.toLocaleString()}</div>
+                    </div>
+                </div>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        // ============================================
+        // CRUD OPERATIONS
+        // ============================================
+        async function saveCompany(e) {
+            e.preventDefault();
+            const name = document.getElementById('companyName').value;
+
+            try {
+                const { error } = await supabase.from('crm_companies').insert([{
+                    name,
+                    industry: document.getElementById('companyIndustry').value,
+                    company_size: document.getElementById('companySize').value,
+                    location: document.getElementById('companyLocation').value,
+                    website: document.getElementById('companyWebsite').value,
+                    instagram_handle: document.getElementById('companyInstagram').value,
+                    linkedin_url: document.getElementById('companyLinkedin').value,
+                    notes: document.getElementById('companyNotes').value,
+                    created_by: currentUser.id
+                }]);
+
+                if (!error) {
+                    closeModal('companyModal');
+                    await loadData();
+                    renderProspects();
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        // ============================================
+        // MODALES
+        // ============================================
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            document.getElementById(id).querySelector('form')?.reset();
+        }
+
+        function openCompanyDetail(id) {
+            alert('Detalle de empresa: ' + id + ' (próxima fase)');
+        }
+
+        function openOpportunityDetail(id) {
+            alert('Detalle de oportunidad: ' + id + ' (próxima fase)');
+        }
+
+        // ============================================
+        // UI HELPERS
+        // ============================================
+        function showAuth() {
+            document.getElementById('authView').style.display = 'flex';
+            document.getElementById('appView').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('authView').style.display = 'none';
+            document.getElementById('appView').style.display = 'block';
+            renderToday();
+        }
+
+        // ============================================
+        // INICIO
+        // ============================================
+        init();
+    </script>
+</body>
+</html>
