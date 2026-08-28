@@ -169,6 +169,23 @@
                 <button type="button" class="btn btn-secondary btn-small" onclick="showLoginForm()" style="width: 100%;">Volver al login</button>
             </p>
         </div>
+
+        <div class="auth-box" id="setNewPasswordBox" style="display: none;">
+            <h1>KROMA CRM</h1>
+            <p>Establecer nueva contraseña</p>
+            <div class="auth-error" id="setPasswordError"></div>
+            <form id="setNewPasswordForm" onsubmit="handleSetNewPassword(event)">
+                <div class="form-group">
+                    <label class="form-label">Nueva contraseña</label>
+                    <input type="password" id="newPassword1" class="form-control" placeholder="Mínimo 8 caracteres" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirmar contraseña</label>
+                    <input type="password" id="newPassword2" class="form-control" required minlength="8">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Guardar contraseña</button>
+            </form>
+        </div>
     </div>
 
     <div id="appView" style="display: none;">
@@ -221,9 +238,25 @@
                     </div>
 
                     <div id="settingsView" class="view">
-                        <div class="card">
-                            <h2>Configuración</h2>
-                            <p style="margin-top: 16px; color: var(--text-secondary);">Próximamente...</p>
+                        <div class="card" style="max-width: 480px;">
+                            <h2>Mi cuenta</h2>
+                            <p style="margin-top: 12px; color: var(--text-secondary); font-size: 14px;">Sesión iniciada como <strong id="settingsEmail"></strong></p>
+                        </div>
+                        <div class="card" style="max-width: 480px;">
+                            <h2>Cambiar contraseña</h2>
+                            <div class="auth-error" id="settingsPasswordError" style="display: none; margin-top: 16px;"></div>
+                            <div class="alert alert-info" id="settingsPasswordSuccess" style="display: none; margin-top: 16px; border-left-color: #10b981; background-color: rgba(16, 185, 129, 0.1); color: #10b981;">Contraseña actualizada correctamente.</div>
+                            <form id="settingsPasswordForm" onsubmit="handleChangePassword(event)" style="margin-top: 16px;">
+                                <div class="form-group">
+                                    <label class="form-label">Nueva contraseña</label>
+                                    <input type="password" id="settingsNewPassword" class="form-control" placeholder="Mínimo 8 caracteres" required minlength="8">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Confirmar contraseña</label>
+                                    <input type="password" id="settingsConfirmPassword" class="form-control" required minlength="8">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Actualizar contraseña</button>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -243,16 +276,32 @@
                     <input type="text" id="companyName" class="form-control" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Industria</label>
+                    <label class="form-label">Rubro / Industria</label>
                     <select id="companyIndustry" class="form-control">
+                        <option>Hoteles y Turismo</option>
+                        <option>Restaurantes</option>
+                        <option>Salud</option>
+                        <option>Bienestar y Belleza</option>
+                        <option>Fitness</option>
                         <option>Retail</option>
                         <option>F&B</option>
                         <option>Real Estate</option>
                         <option>Fintech</option>
                         <option>Agencia</option>
                         <option>Educación</option>
-                        <option>Turismo</option>
                         <option>Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado del prospecto</label>
+                    <select id="companyStatus" class="form-control">
+                        <option>Prospecto nuevo</option>
+                        <option>Por auditar</option>
+                        <option>Por contactar</option>
+                        <option>Contactado</option>
+                        <option>En seguimiento</option>
+                        <option>Descartado</option>
+                        <option>Cliente</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -267,6 +316,14 @@
                 <div class="form-group">
                     <label class="form-label">Ubicación</label>
                     <input type="text" id="companyLocation" class="form-control" placeholder="Panamá">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email público</label>
+                    <input type="text" id="companyEmail" class="form-control" placeholder="contacto@empresa.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Teléfono / WhatsApp</label>
+                    <input type="text" id="companyPhone" class="form-control" placeholder="+507 6000-0000">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Website</label>
@@ -292,12 +349,28 @@
         </div>
     </div>
 
+    <div id="companyDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="companyDetailTitle">Empresa</h2>
+                <button class="modal-close" onclick="closeModal('companyDetailModal')">&times;</button>
+            </div>
+            <div id="companyDetailContent" style="font-size: 14px;"></div>
+            <div style="display: flex; gap: 8px; margin-top: 20px;">
+                <button type="button" class="btn btn-primary" style="flex: 1;" onclick="editCurrentCompany()">Editar</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('companyDetailModal')" style="flex: 1;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://hymqhjuritugqhwimfnm.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bXFoanVyaXR1Z3Fod2ltZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTA1MzUsImV4cCI6MjEwMjYyNjUzNX0.PGPwj6DUuDxGrouuAvjbGM0bpdiIBr4WiSvkj5ftF8c';
 
         let supabase;
         let currentUser = null;
+        let recoveryAccessToken = null;
+        let editingCompanyId = null;
         let data = {
             companies: [],
             contacts: [],
@@ -379,6 +452,34 @@
                 }
             }
 
+            async updateUser(attributes, accessToken) {
+                const token = accessToken || localStorage.getItem('supabase.auth.token');
+                if (!token) {
+                    return { data: null, error: { message: 'No hay sesión activa' } };
+                }
+                try {
+                    const response = await fetch(`${this.url}/auth/v1/user`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'apikey': this.key,
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(attributes)
+                    });
+                    const result = await response.json();
+                    if (response.ok) {
+                        if (localStorage.getItem('supabase.auth.token')) {
+                            localStorage.setItem('supabase.auth.user', JSON.stringify(result));
+                        }
+                        return { data: { user: result }, error: null };
+                    }
+                    return { data: null, error: { message: result.msg || result.error_description || result.message || 'No se pudo actualizar' } };
+                } catch (err) {
+                    return { data: null, error: { message: 'Error de conexión' } };
+                }
+            }
+
             onAuthStateChange(callback) {
                 this.listeners.push(callback);
                 return () => {
@@ -403,6 +504,12 @@
             order(column, { ascending = true } = {}) {
                 this.options.order = column;
                 this.options.ascending = ascending;
+                return this;
+            }
+
+            eq(column, value) {
+                this.options.eqColumn = column;
+                this.options.eqValue = value;
                 return this;
             }
 
@@ -458,12 +565,60 @@
                     return { data: null, error: { message: err.message } };
                 }
             }
+
+            async update(record) {
+                try {
+                    const token = localStorage.getItem('supabase.auth.token');
+                    const headers = {
+                        'apikey': this.key,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    let url = `${this.url}/rest/v1/${this.table}`;
+                    const params = new URLSearchParams();
+                    if (this.options.eqColumn) {
+                        params.append(this.options.eqColumn, `eq.${this.options.eqValue}`);
+                    }
+                    if (params.toString()) url += '?' + params.toString();
+
+                    const response = await fetch(url, {
+                        method: 'PATCH',
+                        headers,
+                        body: JSON.stringify(record)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { data, error: null };
+                    }
+                    return { data: null, error: { message: 'Update failed' } };
+                } catch (err) {
+                    return { data: null, error: { message: err.message } };
+                }
+            }
         }
 
         // Create supabase client
         supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function parseHashParams() {
+            const hash = window.location.hash.startsWith('#') ? window.location.hash.substring(1) : window.location.hash;
+            return new URLSearchParams(hash);
+        }
+
         async function init() {
+            const hashParams = parseHashParams();
+            if (hashParams.get('type') === 'recovery' && hashParams.get('access_token')) {
+                recoveryAccessToken = hashParams.get('access_token');
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+                showAuth();
+                showSetNewPassword();
+                setupEventListeners();
+                return;
+            }
+
             const sessionResult = await supabase.auth.getSession();
             const session = sessionResult.data?.session;
             if (session) {
@@ -514,9 +669,86 @@
         function showLoginForm() {
             document.getElementById('authForm').parentElement.style.display = 'block';
             document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('setNewPasswordBox').style.display = 'none';
             document.getElementById('authError').style.display = 'none';
             document.getElementById('authEmail').value = '';
             document.getElementById('authPassword').value = '';
+        }
+
+        function showSetNewPassword() {
+            document.getElementById('authForm').parentElement.style.display = 'none';
+            document.getElementById('forgotPasswordBox').style.display = 'none';
+            document.getElementById('setNewPasswordBox').style.display = 'block';
+        }
+
+        async function handleSetNewPassword(e) {
+            e.preventDefault();
+            const p1 = document.getElementById('newPassword1').value;
+            const p2 = document.getElementById('newPassword2').value;
+            const errorDiv = document.getElementById('setPasswordError');
+            errorDiv.style.display = 'none';
+
+            if (p1 !== p2) {
+                errorDiv.textContent = 'Las contraseñas no coinciden';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (p1.length < 8) {
+                errorDiv.textContent = 'La contraseña debe tener al menos 8 caracteres';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.updateUser({ password: p1 }, recoveryAccessToken);
+                if (error) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+                recoveryAccessToken = null;
+                document.getElementById('setNewPasswordForm').reset();
+                alert('Contraseña actualizada. Ya puedes iniciar sesión.');
+                showLoginForm();
+            } catch (err) {
+                errorDiv.textContent = 'Error de conexión';
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const p1 = document.getElementById('settingsNewPassword').value;
+            const p2 = document.getElementById('settingsConfirmPassword').value;
+            const errorDiv = document.getElementById('settingsPasswordError');
+            const successDiv = document.getElementById('settingsPasswordSuccess');
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            if (p1 !== p2) {
+                errorDiv.textContent = 'Las contraseñas no coinciden';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            if (p1.length < 8) {
+                errorDiv.textContent = 'La contraseña debe tener al menos 8 caracteres';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const { error } = await supabase.auth.updateUser({ password: p1 });
+                if (error) {
+                    errorDiv.textContent = error.message;
+                    errorDiv.style.display = 'block';
+                } else {
+                    successDiv.style.display = 'block';
+                    document.getElementById('settingsPasswordForm').reset();
+                }
+            } catch (err) {
+                errorDiv.textContent = 'Error de conexión';
+                errorDiv.style.display = 'block';
+            }
         }
 
         async function handlePasswordReset(e) {
@@ -566,6 +798,9 @@
             });
 
             document.getElementById('newEntityBtn').addEventListener('click', () => {
+                editingCompanyId = null;
+                document.getElementById('companyModalTitle').textContent = 'Nueva Empresa';
+                document.getElementById('companyForm').reset();
                 openModal('companyModal');
             });
 
@@ -593,6 +828,7 @@
             if (viewName === 'opportunities') renderOpportunities();
             if (viewName === 'activities') renderActivities();
             if (viewName === 'dashboard') renderDashboard();
+            if (viewName === 'settings') document.getElementById('settingsEmail').textContent = currentUser?.email || '';
         }
 
         async function loadData() {
@@ -667,16 +903,17 @@
                 filtered = filtered.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
             }
 
-            let html = '<table><thead><tr><th>Empresa</th><th>Industria</th><th>Prioridad</th><th>Estado</th><th>Último contacto</th><th>Acciones</th></tr></thead><tbody>';
+            let html = '<table><thead><tr><th>Empresa</th><th>Rubro</th><th>Zona</th><th>Email</th><th>Teléfono</th><th>Prioridad</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
 
             filtered.forEach(c => {
-                const lastContact = c.last_contact ? new Date(c.last_contact).toLocaleDateString() : 'Nunca';
                 html += `<tr>
                     <td><strong>${c.name}</strong></td>
-                    <td>${c.industry}</td>
+                    <td>${c.industry || '-'}</td>
+                    <td>${c.location || '-'}</td>
+                    <td>${c.public_email || '-'}</td>
+                    <td>${c.public_phone || '-'}</td>
                     <td><span class="badge badge-${c.priority === '🔥' ? 'high' : c.priority === '🟡' ? 'medium' : 'low'}">${c.priority} ${c.priority === '🔥' ? 'Alta' : c.priority === '🟡' ? 'Media' : 'Baja'}</span></td>
-                    <td>${c.prospect_status}</td>
-                    <td>${lastContact}</td>
+                    <td>${c.prospect_status || '-'}</td>
                     <td><button class="btn btn-secondary btn-small" onclick="openCompanyDetail('${c.id}')">Ver</button></td>
                 </tr>`;
             });
@@ -783,23 +1020,36 @@
             e.preventDefault();
             const name = document.getElementById('companyName').value;
 
+            const payload = {
+                name,
+                industry: document.getElementById('companyIndustry').value,
+                company_size: document.getElementById('companySize').value,
+                location: document.getElementById('companyLocation').value,
+                website: document.getElementById('companyWebsite').value,
+                instagram_handle: document.getElementById('companyInstagram').value,
+                linkedin_url: document.getElementById('companyLinkedin').value,
+                public_email: document.getElementById('companyEmail').value,
+                public_phone: document.getElementById('companyPhone').value,
+                prospect_status: document.getElementById('companyStatus').value,
+                notes: document.getElementById('companyNotes').value
+            };
+
             try {
-                const result = await supabase.from('crm_companies').insert([{
-                    name,
-                    industry: document.getElementById('companyIndustry').value,
-                    company_size: document.getElementById('companySize').value,
-                    location: document.getElementById('companyLocation').value,
-                    website: document.getElementById('companyWebsite').value,
-                    instagram_handle: document.getElementById('companyInstagram').value,
-                    linkedin_url: document.getElementById('companyLinkedin').value,
-                    notes: document.getElementById('companyNotes').value,
-                    created_by: currentUser.id
-                }]);
+                let result;
+                if (editingCompanyId) {
+                    result = await supabase.from('crm_companies').eq('id', editingCompanyId).update(payload);
+                } else {
+                    payload.created_by = currentUser.id;
+                    result = await supabase.from('crm_companies').insert([payload]);
+                }
 
                 if (!result.error) {
                     closeModal('companyModal');
+                    editingCompanyId = null;
                     await loadData();
                     renderProspects();
+                } else {
+                    alert('Error: ' + result.error.message);
                 }
             } catch (err) {
                 alert('Error: ' + err.message);
@@ -815,8 +1065,49 @@
             document.getElementById(id).querySelector('form')?.reset();
         }
 
+        function escapeHtml(s) {
+            if (!s) return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        }
+
         function openCompanyDetail(id) {
-            alert('Detalle de empresa: ' + id + ' (próxima fase)');
+            const c = data.companies.find(x => x.id === id);
+            if (!c) return;
+            editingCompanyId = id;
+            document.getElementById('companyDetailTitle').textContent = c.name;
+            document.getElementById('companyDetailContent').innerHTML = `
+                <p><strong>Rubro:</strong> ${escapeHtml(c.industry) || '-'}</p>
+                <p><strong>Zona:</strong> ${escapeHtml(c.location) || '-'}</p>
+                <p><strong>Email:</strong> ${escapeHtml(c.public_email) || '-'}</p>
+                <p><strong>Teléfono:</strong> ${escapeHtml(c.public_phone) || '-'}</p>
+                <p><strong>Instagram:</strong> ${escapeHtml(c.instagram_handle) || '-'}</p>
+                <p><strong>Website:</strong> ${escapeHtml(c.website) || '-'}</p>
+                <p><strong>Estado:</strong> ${escapeHtml(c.prospect_status) || '-'}</p>
+                <p><strong>Prioridad:</strong> ${c.priority || '-'}</p>
+                <p style="white-space: pre-wrap; margin-top: 12px;"><strong>Notas:</strong><br>${escapeHtml(c.notes) || '-'}</p>
+            `;
+            openModal('companyDetailModal');
+        }
+
+        function editCurrentCompany() {
+            const c = data.companies.find(x => x.id === editingCompanyId);
+            if (!c) return;
+            closeModal('companyDetailModal');
+            document.getElementById('companyModalTitle').textContent = 'Editar Empresa';
+            document.getElementById('companyName').value = c.name || '';
+            document.getElementById('companyIndustry').value = c.industry || '';
+            document.getElementById('companySize').value = c.company_size || '';
+            document.getElementById('companyLocation').value = c.location || '';
+            document.getElementById('companyWebsite').value = c.website || '';
+            document.getElementById('companyInstagram').value = c.instagram_handle || '';
+            document.getElementById('companyLinkedin').value = c.linkedin_url || '';
+            document.getElementById('companyEmail').value = c.public_email || '';
+            document.getElementById('companyPhone').value = c.public_phone || '';
+            document.getElementById('companyStatus').value = c.prospect_status || 'Prospecto nuevo';
+            document.getElementById('companyNotes').value = c.notes || '';
+            openModal('companyModal');
         }
 
         function openOpportunityDetail(id) {
