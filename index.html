@@ -9,13 +9,12 @@
     <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;KROMA CRM Prospección&quot;,&quot;short_name&quot;:&quot;Prospección&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#000&quot;,&quot;theme_color&quot;:&quot;#000&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000' width='192' height='192'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='system-ui'>K.</text></svg>&quot;,&quot;sizes&quot;:&quot;192x192&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;,&quot;purpose&quot;:&quot;any&quot;}]}">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23000'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='120' font-weight='bold' fill='%23fff' font-family='system-ui'>K.</text></svg>">
 
-    <script async src="https://cdn.jsdelivr.net/npm/supabase@2.38.4/dist/umd/supabase.umd.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bXFoanVyaXR1Z3Fod2ltZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTA1MzUsImV4cCI6MjEwMjYyNjUzNX0.PGPwj6DUuDxGrouuAvjbGM0bpdiIBr4WiSvkj5ftF8c';
+        }
 
         :root {
             --bg-primary: #0a0a0a;
@@ -295,7 +294,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
     <script>
         const SUPABASE_URL = 'https://hymqhjuritugqhwimfnm.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bXFoamp1cml0dWdxaHdpbWZubSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNjkyMzU4MTM1LCJleHAiOjE4NDk0MTQ1MzV9.mC0vOmJ4-L4Yii_u3yQ5J8K6-w9Z8hQ8k6X3-zP3pL0';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh5bXFoanVyaXR1Z3Fod2ltZm5tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNTA1MzUsImV4cCI6MjEwMjYyNjUzNX0.PGPwj6DUuDxGrouuAvjbGM0bpdiIBr4WiSvkj5ftF8c';
 
         let supabase;
         let currentUser = null;
@@ -306,21 +305,167 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             activities: []
         };
 
+        // Lightweight Supabase client implementation (no external dependencies)
+        class SupabaseClient {
+            constructor(url, key) {
+                this.url = url;
+                this.key = key;
+                this.auth = new SupabaseAuth(url, key);
+            }
+
+            from(table) {
+                return new SupabaseQuery(this.url, this.key, table);
+            }
+        }
+
+        class SupabaseAuth {
+            constructor(url, key) {
+                this.url = url;
+                this.key = key;
+                this.listeners = [];
+            }
+
+            async getSession() {
+                const token = localStorage.getItem('supabase.auth.token');
+                if (token) {
+                    try {
+                        const user = JSON.parse(localStorage.getItem('supabase.auth.user'));
+                        return { data: { session: { user, access_token: token } } };
+                    } catch (e) {
+                        return { data: { session: null } };
+                    }
+                }
+                return { data: { session: null } };
+            }
+
+            async signInWithPassword({ email, password }) {
+                try {
+                    const response = await fetch(`${this.url}/auth/v1/token?grant_type=password`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'apikey': this.key },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    const data = await response.json();
+                    if (data.access_token) {
+                        localStorage.setItem('supabase.auth.token', data.access_token);
+                        localStorage.setItem('supabase.auth.user', JSON.stringify(data.user));
+                        this.listeners.forEach(cb => cb('SIGNED_IN', { user: data.user, access_token: data.access_token }));
+                        return { data: { user: data.user }, error: null };
+                    }
+                    return { data: null, error: { message: data.error_description || 'Login failed' } };
+                } catch (err) {
+                    return { data: null, error: { message: 'Connection error' } };
+                }
+            }
+
+            async signOut() {
+                localStorage.removeItem('supabase.auth.token');
+                localStorage.removeItem('supabase.auth.user');
+                this.listeners.forEach(cb => cb('SIGNED_OUT', null));
+                return { error: null };
+            }
+
+            async resetPasswordForEmail(email, options) {
+                try {
+                    const response = await fetch(`${this.url}/auth/v1/recover`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'apikey': this.key },
+                        body: JSON.stringify({ email, gotrue_meta_security: {} })
+                    });
+                    return { error: null };
+                } catch (err) {
+                    return { error: { message: 'Failed to send reset email' } };
+                }
+            }
+
+            onAuthStateChange(callback) {
+                this.listeners.push(callback);
+                return () => {
+                    this.listeners = this.listeners.filter(l => l !== callback);
+                };
+            }
+        }
+
+        class SupabaseQuery {
+            constructor(url, key, table) {
+                this.url = url;
+                this.key = key;
+                this.table = table;
+                this.options = {};
+            }
+
+            select(columns = '*') {
+                this.options.select = columns;
+                return this;
+            }
+
+            order(column, { ascending = true } = {}) {
+                this.options.order = column;
+                this.options.ascending = ascending;
+                return this;
+            }
+
+            async exec() {
+                try {
+                    const token = localStorage.getItem('supabase.auth.token');
+                    const headers = {
+                        'apikey': this.key,
+                        'Content-Type': 'application/json'
+                    };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    let url = `${this.url}/rest/v1/${this.table}`;
+                    const params = new URLSearchParams();
+                    if (this.options.order) {
+                        params.append('order', `${this.options.order}.${this.options.ascending ? 'asc' : 'desc'}`);
+                    }
+                    if (params.toString()) url += '?' + params.toString();
+
+                    const response = await fetch(url, { headers });
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { data, error: null };
+                    }
+                    return { data: null, error: { message: 'Query failed' } };
+                } catch (err) {
+                    return { data: null, error: { message: err.message } };
+                }
+            }
+
+            async insert(records) {
+                try {
+                    const token = localStorage.getItem('supabase.auth.token');
+                    const headers = {
+                        'apikey': this.key,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    };
+                    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+                    const response = await fetch(`${this.url}/rest/v1/${this.table}`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify(records)
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        return { data, error: null };
+                    }
+                    return { data: null, error: { message: 'Insert failed' } };
+                } catch (err) {
+                    return { data: null, error: { message: err.message } };
+                }
+            }
+        }
+
+        // Create supabase client
+        supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         async function init() {
-            let attempts = 0;
-            while (!window.supabase && attempts < 50) {
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-
-            if (!window.supabase) {
-                console.error('Supabase library failed to load');
-                return;
-            }
-
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-            const { data: { session } } = await supabase.auth.getSession();
+            const sessionResult = await supabase.auth.getSession();
+            const session = sessionResult.data?.session;
             if (session) {
                 currentUser = session.user;
                 await loadData();
@@ -452,17 +597,17 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         async function loadData() {
             try {
-                const [companies, contacts, opportunities, activities] = await Promise.all([
-                    supabase.from('crm_companies').select('*').order('created_at', { ascending: false }),
-                    supabase.from('crm_contacts').select('*').order('created_at', { ascending: false }),
-                    supabase.from('crm_opportunities').select('*').order('created_at', { ascending: false }),
-                    supabase.from('crm_activities').select('*').order('activity_date', { ascending: false })
+                const [companiesRes, contactsRes, opportunitiesRes, activitiesRes] = await Promise.all([
+                    supabase.from('crm_companies').select('*').order('created_at', { ascending: false }).exec(),
+                    supabase.from('crm_contacts').select('*').order('created_at', { ascending: false }).exec(),
+                    supabase.from('crm_opportunities').select('*').order('created_at', { ascending: false }).exec(),
+                    supabase.from('crm_activities').select('*').order('activity_date', { ascending: false }).exec()
                 ]);
 
-                data.companies = companies.data || [];
-                data.contacts = contacts.data || [];
-                data.opportunities = opportunities.data || [];
-                data.activities = activities.data || [];
+                data.companies = companiesRes.data || [];
+                data.contacts = contactsRes.data || [];
+                data.opportunities = opportunitiesRes.data || [];
+                data.activities = activitiesRes.data || [];
 
                 document.getElementById('userEmail').textContent = currentUser?.email || '';
             } catch (err) {
@@ -639,7 +784,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const name = document.getElementById('companyName').value;
 
             try {
-                const { error } = await supabase.from('crm_companies').insert([{
+                const result = await supabase.from('crm_companies').insert([{
                     name,
                     industry: document.getElementById('companyIndustry').value,
                     company_size: document.getElementById('companySize').value,
@@ -651,7 +796,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     created_by: currentUser.id
                 }]);
 
-                if (!error) {
+                if (!result.error) {
                     closeModal('companyModal');
                     await loadData();
                     renderProspects();
